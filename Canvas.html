@@ -1,0 +1,118 @@
+# Canvas
+// file: https://drive.google.com/drive/folders/1MUYbkJmMENXUH4bvMBqqCYGA3IXWEv1G?usp=drive_link
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HTML5 Canvas</title>
+  </head>
+  <style>
+    html,
+    body {
+      margin: 0;
+    }
+  </style>
+  <body>
+    <div>
+      <label for="pecilSize">Size:</label>
+      <input type="range" id="pencilSize" min="1" max="100" value="10" />
+    </div>
+    <button id="drawMode">Draw</button>
+    <button id="eraseMode">Erase</button>
+    <button id="clearCanvas">Clear Canvas</button>
+    <canvas id="draw"></canvas>
+
+    <script>
+      const canvas = document.querySelector("#draw");
+      const ctx = canvas.getContext("2d");
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      let isDrawing = false;
+      let lastX = 0;
+      let lastY = 0;
+      let hue = 0;
+      let isEraser = false;
+
+      // Set default drawing settings
+      ctx.strokeStyle = "#BADA55";
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+      ctx.lineWidth = 10; // Default pencil size
+
+      // Handle resizing of canvas
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+
+      // Adjust pencil size
+      document.querySelector("#pencilSize").addEventListener("input", (e) => {
+        ctx.lineWidth = e.target.value;
+      });
+
+      function draw(e) {
+        if (!isDrawing) return;
+
+        if (isEraser) {
+          ctx.globalCompositeOperation = "destination-out"; // Switch to erasing mode
+          ctx.strokeStyle = "rgba(0,0,0,1"; // The color doesn't matter for erasing
+        } else {
+          ctx.globalCompositeOperation = "source-over";
+          ctx.strokeStyle = `hsl(${hue}, 100%, 50%)`;
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(e.offsetX, e.offsetY);
+        ctx.stroke();
+        [lastX, lastY] = [e.offsetX, e.offsetY];
+
+        hue++;
+        if (hue >= 360) {
+          hue = 0;
+        }
+      }
+      // Clear Canvas Function
+      function clearCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+
+      // Debounce function to limit the number of times `draw is called
+      function debounce(func, delay) {
+        let timeout;
+        return function (...args) {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => func.apply(this, args), delay);
+        };
+      }
+
+      // Toggle between drawing and erasing mode
+      document.querySelector("#drawMode").addEventListener("click", () => {
+        isEraser = false;
+      });
+
+      document.querySelector("#eraseMode").addEventListener("click", () => {
+        isEraser = true;
+      });
+
+      document
+        .querySelector("#clearCanvas")
+        .addEventListener("click", clearCanvas);
+
+      // Event listeners for drawing
+      canvas.addEventListener("mousedown", (e) => {
+        isDrawing = true;
+        [lastX, lastY] = [e.offsetX, e.offsetY];
+      });
+
+      canvas.addEventListener("mousemove", debounce(draw, 10)); // Debounced draw function
+      canvas.addEventListener("mouseup", () => (isDrawing = false));
+      canvas.addEventListener("mouseout", () => (isDrawing = false));
+
+      // Handle resizing of canvas
+      window.addEventListener("resize", resizeCanvas);
+    </script>
+  </body>
+</html>
